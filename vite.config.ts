@@ -8,4 +8,8 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] })
   ],
+  server: {
+        port: 3000,
+        // strictPort: true, // Opcional: si el 3000 está ocupado, falla en vez de probar el 3001
+      },
 })
