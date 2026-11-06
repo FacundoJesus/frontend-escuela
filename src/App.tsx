@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { SubmitEvent } from 'react';
 import UserList from "./UserList.tsx";
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
 
-    async function handleSubmit(ev: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(ev: SubmitEvent<HTMLFormElement>) {
         ev.preventDefault();
         setError(null); // Limpiamos errores anteriores antes de intentar
 
@@ -22,7 +22,7 @@ function App() {
                 body: JSON.stringify({ email, password })
             });
 
-            // CORRECCIÓN 1: Faltaba el await para procesar el JSON
+            // await para procesar el JSON
             const data = await response.json(); 
 
             if (!response.ok) {
@@ -45,7 +45,7 @@ function App() {
       
     }
 
-    // CORRECCIÓN 3: Te faltaba el return del componente para pintar el HTML
+
     return (
         <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>
             <h2>Iniciar Sesión</h2>
