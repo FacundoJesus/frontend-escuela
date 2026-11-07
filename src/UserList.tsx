@@ -36,6 +36,8 @@ function UserList({ token }: { token: string }) {
 
     const [name, setName] = useState<string>('');
 
+    const [currentUser, setCurrentUser] = useState<UserDetail | null>(null);
+
     // Función reutilizable para cargar la lista completa
     async function loadUsers() {
         setLoading(true);
@@ -131,8 +133,49 @@ function UserList({ token }: { token: string }) {
         loadUsers();
     }
 
+    // Práctica 4: Mostrar nombre y Rol al cargar o cambiar el token
+    useEffect(() => {
+        async function fetchCurrentUser() {
+            try {
+                const respuesta1 = await fetch(`${import.meta.env.VITE_API_URL}/user/me/id`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const currentUserId = await respuesta1.json();
+
+                if (!respuesta1.ok) {
+                    setError(currentUserId.detail || 'Error al obtener id del Usuario actual');
+                    return;
+                }
+
+                const respuesta2 = await fetch(`${import.meta.env.VITE_API_URL}/user/${currentUserId.id}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await respuesta2.json();
+
+                if (!respuesta2.ok) {
+                    setError(data.detail || 'Error al obtener el Usuario actual');
+                    return;
+                }
+                setCurrentUser(data);
+            } catch {
+                setError('Error de conexión al obtener usuario actual');
+            }
+        }
+
+        fetchCurrentUser();
+    }, [token]);
+
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
+            {currentUser && (
+                <h3>Hola, {currentUser.name} ({currentUser.roles.map(r => r.name).join(', ')})</h3>
+            )}
             <form onSubmit={handleSearch} style={{ marginBottom: '20px' }}>
                 <label>Buscar por nombre:</label>
                 <input 
