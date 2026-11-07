@@ -30,15 +30,39 @@ function UserList({ token }: { token: string }) {
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detail, setDetail] = useState<UserDetail | null>(null);
 
-    // Cargar la lista inicial de usuarios
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Cargar la lista inicial de usuarios (Práctica 2: loading y manejo de errores)
     useEffect(() => {
-        fetch(`${import.meta.env.VITE_API_URL}/user`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        })
-        .then((respuesta) => respuesta.json())
-        .then((respuesta) => setUsers(respuesta));
+        async function fetchUsers() {
+            setLoading(true);
+            setError(null);
+
+            try {
+                const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await respuesta.json();
+
+                if (!respuesta.ok) {
+                    setError(data.detail || 'Ocurrió un error al obtener la lista de Usuarios');
+                    return;
+                }
+
+                setUsers(data);
+            } catch (ex) {
+                setError('Error de conexión con el servidor');
+                console.error(ex);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchUsers();
     }, [token]);
 
     // Práctica 1: useEffect que depende del id seleccionado para consultar GET /user/{id}
@@ -59,23 +83,32 @@ function UserList({ token }: { token: string }) {
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
             <h2>Lista de Usuarios</h2>
-            <p><em>Haz clic en un nombre para ver su detalle:</em></p>
-            <ul>
-                {users.map(user => (
-                    <li 
-                        key={user.id}
-                        onClick={() => setSelectedId(user.id)}
-                        style={{ 
-                            cursor: 'pointer', 
-                            padding: '6px 0',
-                            color: selectedId === user.id ? '#0d6efd' : 'inherit',
-                            fontWeight: selectedId === user.id ? 'bold' : 'normal'
-                        }}
-                    >
-                        {user.name}
-                    </li>
-                ))}
-            </ul>
+
+            {loading && <p>Cargando...</p>}
+
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+
+            {!loading && !error && (
+                <>
+                    <p><em>Haz clic en un nombre para ver su detalle:</em></p>
+                    <ul>
+                        {users.map(user => (
+                            <li 
+                                key={user.id}
+                                onClick={() => setSelectedId(user.id)}
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    padding: '6px 0',
+                                    color: selectedId === user.id ? '#0d6efd' : 'inherit',
+                                    fontWeight: selectedId === user.id ? 'bold' : 'normal'
+                                }}
+                            >
+                                {user.name}
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
 
             {detail && (
                 <div style={{ 
