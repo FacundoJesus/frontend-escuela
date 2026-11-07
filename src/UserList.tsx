@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import type { SubmitEvent } from 'react';
 
 interface User {
     id: number;
@@ -171,11 +171,111 @@ function UserList({ token }: { token: string }) {
         fetchCurrentUser();
     }, [token]);
 
+    const [newName,setNewName] = useState<string>('');
+    const [newEmail,setNewEmail] = useState<string>('');
+    const [newAge,setNewAge] = useState<string>('');
+    const [newPassword,setNewPassword] = useState<string>('');
+    const [newCountryId,setNewCountryId] = useState<number>(1);
+
+    
+    async function handleCreateUser(e: SubmitEvent<HTMLFormElement>) {
+        if (e) e.preventDefault();
+
+        setLoading(true);
+        setError(null);
+        try {
+            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user`, {
+                method: 'POST',
+                headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                body: JSON.stringify({ 
+                    name: newName,
+                    email: newEmail,
+                    age: Number(newAge),
+                    password: newPassword, 
+                    country_id: Number(newCountryId)
+                })
+            });
+
+            const data = await respuesta.json()
+            
+            if(!respuesta.ok) {
+                // Si el backend devuelve un string o un mensaje alternativo
+                setError(data.detail || 'Ocurrió un error al Crear un Usuario');
+                return;
+            }
+            loadUsers();
+
+            setNewName('');
+            setNewEmail('');
+            setNewAge('');
+            setNewPassword('');
+            
+
+            
+            
+
+        } catch {
+            setError('Error de conexión con el servidor');
+        } finally {
+            setLoading(false);
+        }
+        
+    
+
+    }
+
+
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
             {currentUser && (
                 <h3>Hola, {currentUser.name} ({currentUser.roles.map(r => r.name).join(', ')})</h3>
             )}
+            <form onSubmit={handleCreateUser} style={{display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '300px', marginBottom: '20px' }}>
+                <label>Nombre:</label>
+                <input 
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)} 
+                    required 
+                    type='text' 
+                    placeholder='María'
+                />
+                <label>Email:</label>
+                <input 
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)} 
+                    required type='email' 
+                    placeholder='maria@email.com'
+                />
+                <label>Edad:</label>
+                <input 
+                    value={newAge} 
+                    onChange={(e) => setNewAge(e.target.value)} 
+                    required type='number' 
+                    placeholder='29'
+                />
+                <label>Password:</label>
+                <input 
+                    value={newPassword} 
+                    minLength={4}
+                    onChange={(e) => setNewPassword(e.target.value)} 
+                    required 
+                    type='password' 
+                    placeholder='123'
+                />
+                <label>Selecciona el país:</label>
+                <select 
+                    value={newCountryId}
+                    onChange={(e) => setNewCountryId(Number(e.target.value))}
+                >
+                    <option value={1}>Argentina</option>
+                    <option value={2}>Brasil</option>
+                </select>
+                <button type='submit'>Crear Usuario</button>
+
+            </form>
             <form onSubmit={handleSearch} style={{ marginBottom: '20px' }}>
                 <label>Buscar por nombre:</label>
                 <input 
