@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+
 interface User {
     id: number;
     name: string;
@@ -33,36 +34,41 @@ function UserList({ token }: { token: string }) {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Cargar la lista inicial de usuarios (Práctica 2: loading y manejo de errores)
-    useEffect(() => {
-        async function fetchUsers() {
-            setLoading(true);
-            setError(null);
+    const [name, setName] = useState<string>('');
 
-            try {
-                const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+    // Función reutilizable para cargar la lista completa
+    async function loadUsers() {
+        setLoading(true);
+        setError(null);
 
-                const data = await respuesta.json();
+        try {
+            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-                if (!respuesta.ok) {
-                    setError(data.detail || 'Ocurrió un error al obtener la lista de Usuarios');
-                    return;
-                }
+            const data = await respuesta.json();
 
-                setUsers(data);
+            if (!respuesta.ok) {
+                setError(data.detail || 'Ocurrió un error al obtener la lista de Usuarios');
+                return;
+            }
+            
+            setUsers(data);
+
             } catch (ex) {
                 setError('Error de conexión con el servidor');
                 console.error(ex);
+
             } finally {
                 setLoading(false);
             }
         }
 
-        fetchUsers();
+    // Efecto inicial: cargar todos los usuarios al montar o cambiar token
+    useEffect(() => {
+        loadUsers();
     }, [token]);
 
     // Práctica 1: useEffect que depende del id seleccionado para consultar GET /user/{id}
@@ -80,17 +86,78 @@ function UserList({ token }: { token: string }) {
         .then((respuesta) => setDetail(respuesta));
     }, [selectedId, token]);
 
+    // Práctica 3: Buscar por Nombre GET /user/search/{name}
+    async function handleSearch(e?: React.SubmitEvent) {
+        
+        if (e) e.preventDefault();
+
+        // Si el input está vacío, recargamos la lista completa
+        if (!name.trim()) {
+            loadUsers();
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            // encodeURIComponent se asegura de escapar caracteres especiales como # o espacios
+            const encodedName = encodeURIComponent(name.trim());
+            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user/search/${encodedName}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await respuesta.json();
+
+            if (!respuesta.ok) {
+                setError(data.detail || 'Error al buscar usuarios');
+                return;
+            }
+
+            setUsers(data);
+        } catch (ex) {
+            setError('Error de conexión al buscar');
+            console.error(ex);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Botón Limpiar: resetea el input y recarga la lista completa
+    function handleClear() {
+        setName('');
+        loadUsers();
+    }
+
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
-            <h2>Lista de Usuarios</h2>
+            <form onSubmit={handleSearch} style={{ marginBottom: '20px' }}>
+                <label>Buscar por nombre:</label>
+                <input 
+                    value={name}
+                    type='text'
+                    placeholder='Ej. Ma'
+                    onChange={(e) => setName(e.target.value)}
+                />
+                {" "}
+                <button type='submit'>Buscar</button>
+                {" "}
+                <button type='button' onClick={handleClear}>Limpiar</button>
+            </form>
 
+            <h2>Lista de Usuarios</h2>
             {loading && <p>Cargando...</p>}
 
             {error && <p style={{ color: 'red' }}>{error}</p>}
 
             {!loading && !error && (
                 <>
-                    <p><em>Haz clic en un nombre para ver su detalle:</em></p>
+                    {(users.length > 0) ? 
+                        <p><em>Haz clic en un nombre para ver su detalle:</em></p> :
+                            <p style={{color: 'red'}}>No hay usuarios para mostrar</p>
+                    }
                     <ul>
                         {users.map(user => (
                             <li 
