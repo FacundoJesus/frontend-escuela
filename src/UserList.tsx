@@ -190,6 +190,9 @@ function UserList({ token }: { token: string }) {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     },
+                // Las claves (name, email, etc.) vienen del DTO del Backend (CreateUserRequest).
+                // Los valores (newName, etc.) son los estados de React capturados en el formulario.
+                // Number(...) castea el string del input a número entero requerido por FastAPI.
                 body: JSON.stringify({ 
                     name: newName,
                     email: newEmail,
