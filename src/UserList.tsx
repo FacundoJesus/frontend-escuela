@@ -243,6 +243,44 @@ function UserList({ token }: { token: string }) {
         loadUsers(nuevoEstado);
     }
 
+    //Practica 7
+    async function handleDeleteUser(id:number, name:string) {
+
+        //Ventana de confirmacion para borrarlo
+        const confirmado = window.confirm(`¿Estas seguro que deseas borrar a ${name}?`)
+        if(!confirmado) return;
+
+        setError(null);
+
+        try {
+            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user/${id}`, {
+                method:'DELETE',
+                headers: {
+                        Authorization: `Bearer ${token}`
+                }
+            });
+
+            const data = await respuesta.json();
+
+            if(!respuesta.ok) {
+                setError(data.detail || 'Ocurrió un error al Borrar un Usuario');
+                return;
+            }
+
+            // Quitar de la lista en memoria usando .filter sin hacer otro fetch
+            setUsers((prev) => prev.filter((u) => u.id!== id));
+
+            // Si teníamos abierto el detalle de ese usuario, lo cerramos
+            if (selectedId === id) {
+                setSelectedId(null);
+                setDetail(null);
+            }
+        
+        }catch {
+            setError('Error de conexión al eliminar usuario');
+        }
+    }
+
 
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
@@ -335,6 +373,12 @@ function UserList({ token }: { token: string }) {
                                 }}
                             >
                                 {user.name}
+                                <button type='button' onClick={(e) => {
+                                        e.stopPropagation(); // Evita que se abra el detalle al hacer clic en borrar
+                                        handleDeleteUser(user.id, user.name);
+        }}                      >
+                                Borrar
+                                </button>
                             </li>
                         ))}
                     </ul>
