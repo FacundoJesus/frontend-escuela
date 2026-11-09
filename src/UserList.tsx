@@ -38,13 +38,19 @@ function UserList({ token }: { token: string }) {
 
     const [currentUser, setCurrentUser] = useState<UserDetail | null>(null);
 
-    // Función reutilizable para cargar la lista completa
-    async function loadUsers() {
+    // Práctica 6: Estado para alternar entre "Todos" y "Solo mayores"
+    const [soloMayores, setSoloMayores] = useState<boolean>(false);
+
+    // Función reutilizable para cargar la lista completa (acepta filtro de Práctica 6)
+    async function loadUsers(mayores: boolean = soloMayores) {
         setLoading(true);
         setError(null);
 
+        // Práctica 6: Si 'mayores' es true consulta GET /user_mayores; si es false consulta GET /user
+        const endpoint = mayores ? 'user_mayores' : 'user';
+
         try {
-            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/user`, {
+            const respuesta = await fetch(`${import.meta.env.VITE_API_URL}/${endpoint}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -230,6 +236,13 @@ function UserList({ token }: { token: string }) {
 
     }
 
+    // Práctica 6: Alterna el filtro de mayores de edad y vuelve a pedir la lista al endpoint correspondiente
+    function handleToggleMayores() {
+        const nuevoEstado = !soloMayores;
+        setSoloMayores(nuevoEstado);
+        loadUsers(nuevoEstado);
+    }
+
 
     return (
         <div style={{ maxWidth: '600px', margin: '20px auto', fontFamily: 'sans-serif' }}>
@@ -292,6 +305,11 @@ function UserList({ token }: { token: string }) {
                 {" "}
                 <button type='button' onClick={handleClear}>Limpiar</button>
             </form>
+
+            {/* Práctica 6: Botón que alterna entre Todos y Solo mayores */}
+            <button type="button" onClick={handleToggleMayores}>
+                {soloMayores ? "Ver Todos" : "Solo mayores"}
+            </button>
 
             <h2>Lista de Usuarios</h2>
             {loading && <p>Cargando...</p>}
