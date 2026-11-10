@@ -7,7 +7,8 @@ function App() {
     const [password, setPassword] = useState<string>('');
 
     const [error, setError] = useState<string | null>(null);
-    const [token, setToken] = useState<string | null>(null);
+    // Práctica 8: Recuperar el token guardado en localStorage al iniciar la app
+    const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
 
     async function handleSubmit(ev: SubmitEvent<HTMLFormElement>) {
         ev.preventDefault();
@@ -31,6 +32,8 @@ function App() {
                 return;
             }
 
+            // Práctica 8: Persistir el token en localStorage para mantener sesión activa
+            localStorage.setItem('token', data.token);
             setToken(data.token);
             console.log("Login exitoso, token guardado:", data.token);
 
@@ -40,8 +43,16 @@ function App() {
         }
     }
 
+    // Práctica 8: Función que borra el token de localStorage y del estado, y vuelve al login con mensaje
+    function handleUnauthorized() {
+        localStorage.removeItem('token');
+        setToken(null);
+        setError('Tu sesión venció');
+    }
+
     if(token) {
-      return <UserList token={token} />;
+      // Práctica 8: Pasar handleUnauthorized como prop onUnauthorized a UserList
+      return <UserList token={token} onUnauthorized={handleUnauthorized}/>;
       
     }
 

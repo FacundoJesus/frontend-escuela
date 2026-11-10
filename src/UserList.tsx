@@ -25,8 +25,14 @@ interface UserDetail {
     roles: Role[];
 }
 
-// Recibes el token como una prop del componente
-function UserList({ token }: { token: string }) {
+// Práctica 8: Interfaz de props que incluye la función callback onUnauthorized
+interface UserListProps {
+    token: string;
+    onUnauthorized: () => void;
+}
+
+// Recibes el token y el callback onUnauthorized como props del componente
+function UserList({ token, onUnauthorized }: UserListProps) {
     const [users, setUsers] = useState<User[]>([]);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [detail, setDetail] = useState<UserDetail | null>(null);
@@ -57,6 +63,12 @@ function UserList({ token }: { token: string }) {
             });
 
             const data = await respuesta.json();
+
+            // Práctica 8: Chequear 401 ANTES de !respuesta.ok para que onUnauthorized se dispare
+            if (respuesta.status === 401) {
+                onUnauthorized();
+                return;
+            }
 
             if (!respuesta.ok) {
                 setError(data.detail || 'Ocurrió un error al obtener la lista de Usuarios');
@@ -90,12 +102,21 @@ function UserList({ token }: { token: string }) {
                 Authorization: `Bearer ${token}`,
             },
         })
-        .then((respuesta) => respuesta.json())
-        .then((respuesta) => setDetail(respuesta));
+        .then((respuesta) => {
+            // Práctica 8: Chequear 401 al consultar detalle
+            if (respuesta.status === 401) {
+                onUnauthorized();
+                return null;
+            }
+            return respuesta.json();
+        })
+        .then((respuesta) => {
+            if (respuesta) setDetail(respuesta);
+        });
     }, [selectedId, token]);
 
     // Práctica 3: Buscar por Nombre GET /user/search/{name}
-    async function handleSearch(e?: React.SubmitEvent) {
+    async function handleSearch(e: SubmitEvent<HTMLFormElement>) {
         
         if (e) e.preventDefault();
 
@@ -119,10 +140,16 @@ function UserList({ token }: { token: string }) {
 
             const data = await respuesta.json();
 
+            // Práctica 8: Chequear 401 al buscar por nombre
+            if (respuesta.status === 401) {
+                onUnauthorized();
+                return;
+            }
+
             if (!respuesta.ok) {
                 setError(data.detail || 'Error al buscar usuarios');
                 return;
-            }
+            }            
 
             setUsers(data);
         } catch (ex) {
@@ -151,6 +178,12 @@ function UserList({ token }: { token: string }) {
 
                 const currentUserId = await respuesta1.json();
 
+                // Práctica 8: Chequear 401 en /user/me/id
+                if (respuesta1.status === 401) {
+                    onUnauthorized();
+                    return;
+                }
+
                 if (!respuesta1.ok) {
                     setError(currentUserId.detail || 'Error al obtener id del Usuario actual');
                     return;
@@ -164,10 +197,17 @@ function UserList({ token }: { token: string }) {
 
                 const data = await respuesta2.json();
 
+                // Práctica 8: Chequear 401 en /user/{id}
+                if (respuesta2.status === 401) {
+                    onUnauthorized();
+                    return;
+                }
+
                 if (!respuesta2.ok) {
                     setError(data.detail || 'Error al obtener el Usuario actual');
                     return;
                 }
+
                 setCurrentUser(data);
             } catch {
                 setError('Error de conexión al obtener usuario actual');
@@ -210,6 +250,12 @@ function UserList({ token }: { token: string }) {
 
             const data = await respuesta.json()
             
+            // Práctica 8: Chequear 401 al crear usuario
+            if (respuesta.status === 401) {
+                onUnauthorized();
+                return;
+            }
+
             if(!respuesta.ok) {
                 // Si el backend devuelve un string o un mensaje alternativo
                 setError(data.detail || 'Ocurrió un error al Crear un Usuario');
@@ -261,6 +307,12 @@ function UserList({ token }: { token: string }) {
             });
 
             const data = await respuesta.json();
+
+            // Práctica 8: Chequear 401 al borrar usuario
+            if (respuesta.status === 401) {
+                onUnauthorized();
+                return;
+            }
 
             if(!respuesta.ok) {
                 setError(data.detail || 'Ocurrió un error al Borrar un Usuario');
