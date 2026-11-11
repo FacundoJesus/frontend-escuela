@@ -22,7 +22,7 @@ function App() {
                 body: JSON.stringify({ email, password })
             });
 
-            // CORRECCIÓN 1: Faltaba el await para procesar el JSON
+            
             const data = await response.json(); 
 
             if (!response.ok) {
